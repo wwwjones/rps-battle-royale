@@ -1,0 +1,15 @@
+[package]
+name = "rps"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#npc-engine-core = { git ="https://github.com/ethz-gtc/npc-engine" }
+npc-engine-core = { path = "./npc-engine/npc-engine-core" }
+#npc-engine-utils = { git = "https://github.com/ethz-gtc/npc-engine" }
+npc-engine-utils = { path = "./npc-engine/npc-engine-utils" }
+
+#clearscreen = "1.0.10"
+ansi_term = "0.12"
