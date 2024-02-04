@@ -1,5 +1,6 @@
 use std::num::NonZeroU64;
 
+use executor_state::RPSBattleRoyaleExecutorState;
 use npc_engine_core::MCTSConfiguration;
 use npc_engine_utils::run_threaded_executor;
 
@@ -10,6 +11,8 @@ mod executor_state;
 mod map;
 mod domain;
 mod state;
+mod tasks;
+mod behavior;
 
 fn main() {
     // These parameters control the MCTS algorithm.
@@ -24,11 +27,10 @@ fn main() {
     };
 
     // First clear the screen.
-    // clearscreen::clear().unwrap();
+    print!("{}[2J", 27 as char);
 
     // State of the execution.
     let mut executor_state = RPSBattleRoyaleExecutorState::default();
 
-    // Run as long as there is at least one agent alive.
     run_threaded_executor(&mcts_config, &mut executor_state, EXECUTION_STEP_DURATION);
 }

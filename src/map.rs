@@ -22,10 +22,11 @@ impl Map {
     pub fn width(&self) -> u32 {
         self.width
     }
+    pub fn size(&self) -> Coord2D {
+        Coord2D { x: self.width as i32, y: self.height as i32}
+    }
     pub fn out_of_bounds(&self, coord: Coord2D) -> bool {
-        let quadrant_height = self.height/2;
-        let quadrant_width = self.width/2;
-        (coord.x.abs() as u32) < quadrant_width && (coord.y.abs() as u32) < quadrant_height
+        coord.x < 0 || coord.x > (self.width as i32) || coord.y < 0 || coord.y > (self.height as i32)
     }
 }
 

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use npc_engine_core::{AgentId, StateDiffRef, StateDiffRefMut};
 use npc_engine_utils::{keep_second_mut, Coord2D};
@@ -16,7 +16,7 @@ pub enum AgentType {
 pub struct AgentState {
     pub ty: AgentType,
     pub location: Coord2D,
-    pub conversions: u64,
+    pub conversions: i64,
     pub converted: bool,
 }
 
@@ -28,12 +28,46 @@ pub struct GlobalState {
     pub agents: Agents,
 }
 
-/* #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct LocalState {
-    pub origin: Coord2D,
-    pub map: Map,
-    pub agents: Agents,
-} */
+impl Display for GlobalState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+
+/*         for (id, state) in &self.agents {
+            writeln!(f, "{id}, {}", state.location)?;
+        } */
+
+        // collect agents into a map indexed by locations
+        // go through each map coordinate from top left to bottom right and print 
+        // a background for every coord, putting an agent on top if necessary
+        let mut agents_map = HashMap::new();
+        for (_, agent_state) in self.agents.iter() {
+            agents_map
+                .entry(agent_state.location)
+                .or_insert_with(|| agent_state.ty);
+        }
+        let width = self.map.width();
+        let height = self.map.height();
+        for y in 0..height {
+            for x in 0..width {
+                use ansi_term::Colour::Fixed;
+                let background = Fixed(241);
+                let location = Coord2D::new(x as i32, y as i32);
+                let text = if let Some(agent) = agents_map.get(&location) {
+                    match agent {
+                        AgentType::Rock => "🪨",
+                        AgentType::Paper => "📄",
+                        AgentType::Scissors => "✂️",
+                    }
+                } else {
+                    "  "
+                };
+                write!(f, "{}", Fixed(0).on(background).paint(text))?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default)]
 pub struct Diff {
@@ -65,6 +99,8 @@ pub trait Access {
     fn list_agents(&self) -> Vec<AgentId>;
     fn get_agent(&self, agent: AgentId) -> Option<&AgentState>;
     fn get_agent_at(&self, location: Coord2D) -> Option<(AgentId, &AgentState)>;
+    fn agent_type_at_location(&self, location: Coord2D) -> Option<AgentType>;
+    fn is_location_valid(&self, location: Coord2D) -> bool;
 }
 
 pub trait AccessMut: std::ops::Deref
@@ -96,39 +132,51 @@ impl Access for StateDiffRef<'_, RPSBattleRoyaleDomain> {
         self.diff
             .get_agent(agent)
             .or_else(|| self.initial_state.agents.get(&agent))
-        }
+    }
 
-        fn get_agent_at(&self, location: Coord2D) -> Option<(AgentId, &AgentState)> {
-            fn filter_location(
-                location: Coord2D,
-                id: AgentId,
-                state: &AgentState,
-            ) -> Option<(AgentId, &AgentState)> {
-                if state.location == location {
-                    Some((id, state))
-                } else {
-                    None
-                }
+    fn get_agent_at(&self, location: Coord2D) -> Option<(AgentId, &AgentState)> {
+        fn filter_location(
+            location: Coord2D,
+            id: AgentId,
+            state: &AgentState,
+        ) -> Option<(AgentId, &AgentState)> {
+            if state.location == location {
+                Some((id, state))
+            } else {
+                None
             }
-            fn get_agent_at_location(
-                location: Coord2D,
-                candidates: &[(AgentId, AgentState)],
-            ) -> Option<(AgentId, &'_ AgentState)> {
-                candidates
-                    .iter()
-                    .find_map(|(id, state)| filter_location(location, *id, state))
-            }
-            get_agent_at_location(location, &self.diff.agents)
-                .or_else(|| {
-                    self.initial_state.agents.iter().find_map(|(id, state)| {
-                        if self.diff.get_agent(*id).is_some() {
-                            None
-                        } else {
-                            filter_location(location, *id, state)
-                        }
-                    })
-                })
         }
+        fn get_agent_at_location(
+            location: Coord2D,
+            candidates: &[(AgentId, AgentState)],
+        ) -> Option<(AgentId, &'_ AgentState)> {
+            candidates
+                .iter()
+                .find_map(|(id, state)| filter_location(location, *id, state))
+        }
+        get_agent_at_location(location, &self.diff.agents)
+            .or_else(|| {
+                self.initial_state.agents.iter().find_map(|(id, state)| {
+                    if self.diff.get_agent(*id).is_some() {
+                        None
+                    } else {
+                        filter_location(location, *id, state)
+                    }
+                })
+            })
+    }
+
+    fn agent_type_at_location(&self, location: Coord2D) -> Option<AgentType> {
+        if let Some((_, agent)) = self.get_agent_at(location) {
+            Some(agent.ty)
+        } else {
+            None
+        }
+    }
+
+    fn is_location_valid(&self, location: Coord2D) -> bool {
+        !self.initial_state.map.out_of_bounds(location)
+    }
 }
 
 impl AccessMut for StateDiffRefMut<'_, RPSBattleRoyaleDomain> {
