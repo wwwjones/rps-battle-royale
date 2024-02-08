@@ -20,7 +20,6 @@ pub enum DisplayAction {
     Idle,
     Plan,
     Move(Direction),
-    Convert(AgentId),
 }
 
 pub struct RPSBattleRoyaleDomain;
@@ -35,14 +34,18 @@ impl Domain for RPSBattleRoyaleDomain {
     }
 
     fn get_current_value(_tick: u64, state_diff: StateDiffRef<Self>, agent: AgentId) -> AgentValue {
-        AgentValue::new(state_diff.get_agent(agent).unwrap().conversions as f32).unwrap()
+        let agent = state_diff.get_agent(agent).unwrap();
+        let point_value = state_diff.initial_state.map.longest_dist();
+        let conversions = (agent.conversions as f32) * point_value;
+        let distance = state_diff.initial_state.map.distance_points(agent.location);
+        AgentValue::new(conversions + distance).unwrap()
     }
 
     fn update_visible_agents(_start_tick: u64, ctx: Context<Self>, agents: &mut BTreeSet<AgentId>) {
         // clear the list
         agents.clear();
         // add all agents from the state
-        agents.extend(ctx.state_diff.initial_state.agents.keys());   
+        agents.extend(ctx.state_diff.initial_state.agents.keys());
     }
 
     fn display_action_task_planning() -> Self::DisplayAction {

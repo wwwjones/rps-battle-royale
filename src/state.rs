@@ -12,12 +12,29 @@ pub enum AgentType {
     Scissors,
 }
 
+impl AgentType {
+    pub fn predator(&self) -> AgentType {
+        match self {
+            AgentType::Rock => AgentType::Paper,
+            AgentType::Paper => AgentType::Scissors,
+            AgentType::Scissors => AgentType::Rock,
+        }
+    }
+
+    pub fn prey(&self) -> AgentType {
+        match self {
+            AgentType::Rock => AgentType::Scissors,
+            AgentType::Paper => AgentType::Rock,
+            AgentType::Scissors => AgentType::Paper,
+        }
+    }
+}
+
 #[derive(Debug, Hash, Clone, Eq, PartialEq)]
 pub struct AgentState {
     pub ty: AgentType,
     pub location: Coord2D,
     pub conversions: i64,
-    pub converted: bool,
 }
 
 pub type Agents = HashMap<AgentId, AgentState>;
@@ -72,7 +89,9 @@ impl Display for GlobalState {
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default)]
 pub struct Diff {
     pub agents: Vec<(AgentId, AgentState)>,
+    pub converted_agents: Vec<AgentId>,
 }
+
 impl Diff {
     fn has_agent(&self, agent: AgentId) -> bool {
         self.get_agent(agent).is_some()

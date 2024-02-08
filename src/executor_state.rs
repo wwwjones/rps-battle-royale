@@ -49,7 +49,6 @@ impl ExecutorStateGlobal<RPSBattleRoyaleDomain> for RPSBattleRoyaleExecutorState
                                 ty,
                                 location,
                                 conversions: 0,
-                                converted: false,
                             }
                         );
                         agent_id += 1;
@@ -62,9 +61,9 @@ impl ExecutorStateGlobal<RPSBattleRoyaleDomain> for RPSBattleRoyaleExecutorState
         let rocks = CONTESTANTS/3;
         let papers = CONTESTANTS/3;
         let scissors = CONTESTANTS - rocks - papers;
-        add_contestants(AgentType::Scissors, scissors);
         add_contestants(AgentType::Rock, rocks);
         add_contestants(AgentType::Paper, papers);
+        add_contestants(AgentType::Scissors, scissors);
       
         GlobalState { map, agents }
     }
@@ -82,6 +81,7 @@ impl ExecutorStateGlobal<RPSBattleRoyaleDomain> for RPSBattleRoyaleExecutorState
     }
 
     fn post_step_hook(&mut self, tick: u64, state: &mut GlobalState) {
+        //print!("\x1B[H {:?}", state.agents);
 
         // update the type counts and print the screen
         let mut rock_count = 0;
@@ -110,6 +110,11 @@ impl ExecutorStateGlobal<RPSBattleRoyaleDomain> for RPSBattleRoyaleExecutorState
             *state,
             self.mcts_visits,
         );
+        
+        if self.rock_count == CONTESTANTS {println!("Rock wins!\n {:?}", state.agents)} 
+        else if self.paper_count == CONTESTANTS {println!("Paper wins!\n {:?}", state.agents)}
+        else if self.scissors_count == CONTESTANTS {println!("Scissors win!\n {:?}", state.agents)}
+
     }
 }
 

@@ -1,4 +1,4 @@
-use npc_engine_core::{Behavior, Context, Task};
+use npc_engine_core::{Behavior, Context, IdleTask, Task};
 use npc_engine_utils::DIRECTIONS;
 
 use crate::{domain::RPSBattleRoyaleDomain, tasks::r#move::Move};
@@ -17,7 +17,10 @@ impl Behavior<RPSBattleRoyaleDomain> for Contestant {
                 tasks.push(Box::new(task));
             }
         }
-
-        //tasks.push(Box::new(IdleTask));
+        if tasks.is_empty() {
+            log::error!("Couldnt add any movement tasks\n")
+        }
+        tasks.push(Box::new(IdleTask));
+        
     }
 }

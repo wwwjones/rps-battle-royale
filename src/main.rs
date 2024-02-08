@@ -13,6 +13,7 @@ mod domain;
 mod state;
 mod tasks;
 mod behavior;
+mod testing_factory;
 
 fn main() {
     // These parameters control the MCTS algorithm.
@@ -25,6 +26,8 @@ fn main() {
         seed: None,
         planning_task_duration: Some(NonZeroU64::new(PLANNING_DURATION).unwrap()),
     };
+
+    env_logger::init();
 
     // First clear the screen.
     print!("{}[2J", 27 as char);
