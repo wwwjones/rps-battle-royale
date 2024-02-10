@@ -14,7 +14,7 @@ use crate::behavior::Contestant;
 use crate::state::*;
 
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum DisplayAction {
     #[default]
     Idle,

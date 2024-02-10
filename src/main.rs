@@ -14,6 +14,7 @@ mod state;
 mod tasks;
 mod behavior;
 mod testing_factory;
+mod planner;
 
 fn main() {
     // These parameters control the MCTS algorithm.

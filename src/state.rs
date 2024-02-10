@@ -89,7 +89,6 @@ impl Display for GlobalState {
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default)]
 pub struct Diff {
     pub agents: Vec<(AgentId, AgentState)>,
-    pub converted_agents: Vec<AgentId>,
 }
 
 impl Diff {
