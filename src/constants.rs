@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-pub const CONTESTANTS: u32 = 33;
+pub const CONTESTANTS: u32 = 15;
 
 // map generation
 pub const MAP_HEIGHT: u32 = 20;
-pub const MAP_WIDTH: u32 = 40; 
+pub const MAP_WIDTH: u32 = 20; 
 
 // planning parameters
 pub const PLANNING_DURATION: u64 = 2;

@@ -1,23 +1,21 @@
-use std::{fmt, sync::{Arc, Mutex}};
+use std::fmt;
 
 use npc_engine_core::{AgentValue, Domain};
 
-pub type Node<D> = Arc<Mutex<NodeInner<D>>>;
-
 #[derive(Clone)]
-pub struct NodeInner<D: Domain> {
+pub struct Node<D: Domain> {
     // the cumulative changes at this node
     diff: D::Diff,
     // the score at this node
     score: AgentValue,
     // pointer to the parent node, or None if this is the root
-    parent: Option<*mut Node<D>>,
+    parent: Option<usize>,
     // vector of children nodes, with their respective tasks
-    children: Vec<(D::DisplayAction, *mut Node<D>)>,
+    children: Vec<(D::DisplayAction, usize)>,
 }
 
-impl <D: Domain> NodeInner<D> {
-    pub fn new(diff: D::Diff, score: AgentValue, parent: Option<*mut Node<D>>, children: Vec<(D::DisplayAction, *mut Node<D>)>) -> Self {
+impl <D: Domain> Node<D> {
+    pub fn new(diff: D::Diff, score: AgentValue, parent: Option<usize>, children: Vec<(D::DisplayAction, usize)>) -> Self {
         Self {
             diff,
             score,
@@ -25,7 +23,7 @@ impl <D: Domain> NodeInner<D> {
             children,
         }
     }
-    pub fn add_children(&mut self, children: Vec<(D::DisplayAction, *mut Node<D>)>) {
+    pub fn add_children(&mut self, children: Vec<(D::DisplayAction, usize)>) {
         self.children = children;
     }
     pub fn diff(&self) -> &D::Diff {
@@ -34,14 +32,14 @@ impl <D: Domain> NodeInner<D> {
     pub fn score(&self) -> AgentValue {
         self.score
     }
-    pub fn children(&self) -> &Vec<(D::DisplayAction, *mut Node<D>)> {
+    pub fn children(&self) -> &Vec<(D::DisplayAction, usize)> {
         &self.children
     }
 }
 
-impl<D: Domain> fmt::Debug for NodeInner<D> {
+impl<D: Domain> fmt::Debug for Node<D> {
     fn fmt(&self, f: &'_ mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("NodeInner")
+        f.debug_struct("Node")
             .field("\ndiff", &self.diff)
             .field("\nscore", &self.score)
             .field("\nparent", &self.parent)
