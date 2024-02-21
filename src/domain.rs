@@ -7,11 +7,13 @@ use npc_engine_core::Context;
 use npc_engine_core::Domain;
 use npc_engine_core::DomainWithPlanningTask;
 use npc_engine_core::StateDiffRef;
+use npc_engine_utils::Coord2D;
 use npc_engine_utils::Direction;
 use npc_engine_utils::GlobalDomain;
 
 use crate::behavior::Contestant;
 use crate::state::*;
+use crate::VISIBILITY_DISTANCE;
 
 
 #[derive(Debug, Default, Clone)]
@@ -45,7 +47,18 @@ impl Domain for RPSBattleRoyaleDomain {
         // clear the list
         agents.clear();
         // add all agents from the state
-        agents.extend(ctx.state_diff.initial_state.agents.keys());
+        // TODO: limit the horizon to not all of the dudes...
+        // sort the list of agents by increasing distance, pick the first x
+        // maybe make sure we include 1 or 2 of each type?
+        // or just purely do it with distance --> either change the project so we use local state again or just do it here
+        // yeah, just manhattan distance of x
+        let agent_loc = ctx.state_diff.get_agent(ctx.agent).unwrap().location;
+        for (id, state) in &ctx.state_diff.initial_state.agents {
+            if Coord2D::manhattan_dist(&state.location, agent_loc) < VISIBILITY_DISTANCE {
+                agents.insert(*id);
+            }
+        }
+        //agents.extend(ctx.state_diff.initial_state.agents.keys());
     }
 
     fn display_action_task_planning() -> Self::DisplayAction {

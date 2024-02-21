@@ -16,7 +16,7 @@
 
 // how to make breadth first - how to do backprop
 
-use std::fmt;
+use std::{borrow::BorrowMut, collections::BTreeSet, fmt};
 
 use npc_engine_core::{AgentId, AgentValue, Context, ContextMut, Domain, StateDiffRef, Task};
 
@@ -25,7 +25,7 @@ use super::node::Node;
 /// Pinky and the
 struct Brain<D: Domain> {
     // how many steps do we want to simulate
-    depth: u32,
+    depth: u64,
     // agent for whom we are planning
     root_agent: AgentId,
     // root node
@@ -34,12 +34,14 @@ struct Brain<D: Domain> {
     scores: Vec<AgentValue>,
     // initial state before plannning
     initial_state: D::State,
+    // starting tick
+    start_tick: u64,
     // best task
     best_task: Option<Box<dyn Task<D>>>,
 }
 
 impl <D: Domain> Brain<D> {
-    pub fn new(root_agent: AgentId, initial_state: D::State, start_tick: u64, depth: u32) -> Self {
+    pub fn new(root_agent: AgentId, initial_state: D::State, start_tick: u64, depth: u64) -> Self {
         // some helpers
         let diff = D::Diff::default();
         let zero_score = AgentValue::new(0.0).unwrap();
@@ -83,6 +85,7 @@ impl <D: Domain> Brain<D> {
             nodes,
             scores,
             initial_state,
+            start_tick,
             best_task: None,
         }
 
@@ -90,9 +93,36 @@ impl <D: Domain> Brain<D> {
     }
 
     pub fn run(&mut self) {
-
         // other agent move, this agent's move, loop
+        // we start with a root node with a child node for each valid move
+        // want to go breadth first - increase the tick and iterate through the most recently added nodes
+        let mut start_idx = 1; // we start with the first child
+        let mut end_idx = self.nodes.len();
 
+        // loop node creation until we have reach the desired depth
+        for level in 0..self.depth {
+            let tick = self.start_tick + level;
+
+            for i in start_idx..end_idx {
+                // for each node, we get a list of the other agents
+                // for each agent, we get its possible tasks and execute each
+                // each agent applies the best task to the diff
+                // this diff is then used to find the next valid tasks for our root agent
+                // for each valid task, we execute it and add a new node as in initialization
+                // when each node has added its children, backpropogate the scores to the root
+                // change the start and end indices and repeat for the next level
+                // get the other visible agents
+
+                //get the current node
+                let start_node = self.nodes[i].1.borrow_mut();
+                let diff = start_node.diff();
+                let ctx = Context::with_state_and_diff(tick, &self.initial_state, diff, self.root_agent);
+                let mut agents: BTreeSet<AgentId> = BTreeSet::new();
+                D::update_visible_agents(tick, ctx, &mut agents);
+            }
+        }
+
+        // once the tree has been fully created, simply pick the best action and return it
     }
 }
 
@@ -138,7 +168,7 @@ mod tests {
         let child_2 = &brain.nodes[child_2_idx].1;
         let child_3 = &brain.nodes[child_3_idx].1;
 
-        println!("{:?}\n{:?}\n{:?}", child_1, child_2, child_3);
+        println!("\nRoot node children:\n\n{:?}\n\n{:?}\n\n{:?}", child_1, child_2, child_3);
 
     }
 }

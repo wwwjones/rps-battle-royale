@@ -17,5 +17,7 @@ pub const PLANNING_EXPLORATION: f32 = 1.414;
 // task weights (idle task has weight 1)
 pub const MOVE_WEIGHT: f32 = 10.0;
 
+pub const VISIBILITY_DISTANCE: i32 = 10;
+
 // execution paramters
 pub const EXECUTION_STEP_DURATION: Duration = Duration::from_millis(10);
