@@ -43,6 +43,7 @@ impl Domain for RPSBattleRoyaleDomain {
         AgentValue::new(conversions + distance).unwrap()
     }
 
+    /// update agents to include all other agents within a given manhattan distance
     fn update_visible_agents(_start_tick: u64, ctx: Context<Self>, agents: &mut BTreeSet<AgentId>) {
         // clear the list
         agents.clear();
@@ -52,9 +53,10 @@ impl Domain for RPSBattleRoyaleDomain {
         // maybe make sure we include 1 or 2 of each type?
         // or just purely do it with distance --> either change the project so we use local state again or just do it here
         // yeah, just manhattan distance of x
-        let agent_loc = ctx.state_diff.get_agent(ctx.agent).unwrap().location;
+        let root_agent = ctx.agent;
+        let agent_loc = ctx.state_diff.get_agent(root_agent).unwrap().location;
         for (id, state) in &ctx.state_diff.initial_state.agents {
-            if Coord2D::manhattan_dist(&state.location, agent_loc) < VISIBILITY_DISTANCE {
+            if Coord2D::manhattan_dist(&state.location, agent_loc) < VISIBILITY_DISTANCE && *id != root_agent {
                 agents.insert(*id);
             }
         }
