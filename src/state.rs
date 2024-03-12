@@ -70,7 +70,7 @@ impl Display for GlobalState {
                 let location = Coord2D::new(x as i32, y as i32);
                 let text = if let Some(agent) = agents_map.get(&location) {
                     match agent {
-                        AgentType::Rock => "🪨",
+                        AgentType::Rock => "🗿",
                         AgentType::Paper => "📄",
                         AgentType::Scissors => "✂️",
                     }
@@ -89,7 +89,6 @@ impl Display for GlobalState {
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default)]
 pub struct Diff {
     pub agents: Vec<(AgentId, AgentState)>,
-    pub converted_agents: Vec<AgentId>,
 }
 
 impl Diff {

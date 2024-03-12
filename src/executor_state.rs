@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
 use npc_engine_core::{ActiveTask, ActiveTasks, AgentId, IdleTask, MCTS};
-use npc_engine_utils::{plot_tree_in_tmp_with_task_name, Coord2D, ExecutorState, ExecutorStateGlobal};
+use npc_engine_utils::{plot_tree_in_tmp_with_task_name, Coord2D};
 
-use crate::{domain::RPSBattleRoyaleDomain, map::Map, state::{AgentState, AgentType, Agents, GlobalState}, CONTESTANTS, MAP_HEIGHT, MAP_WIDTH, PLANNING_MINIMUM_VISITS};
+use crate::{domain::RPSBattleRoyaleDomain, executor::{ExecutorState, ExecutorStateGlobal}, map::Map, state::{AgentState, AgentType, Agents, GlobalState}, CONTESTANTS, MAP_HEIGHT, MAP_WIDTH, PLANNING_DURATION, PLANNING_MINIMUM_VISITS};
 
 #[derive(Debug)]
 pub struct RPSBattleRoyaleExecutorState {
@@ -69,10 +69,12 @@ impl ExecutorStateGlobal<RPSBattleRoyaleDomain> for RPSBattleRoyaleExecutorState
     }
 
     fn init_task_queue(&self, state: &GlobalState) -> ActiveTasks<RPSBattleRoyaleDomain> {
+        let groups = PLANNING_DURATION + 1;
+
         state
             .agents
             .iter()
-            .map(|(id, _)| ActiveTask::new_with_end(0, 0, *id, Box::new(IdleTask)))
+            .map(|(id, _)| ActiveTask::new_with_end(0, id.0 as u64 % groups, *id, Box::new(IdleTask)))
             .collect()
     }
 
@@ -101,14 +103,12 @@ impl ExecutorStateGlobal<RPSBattleRoyaleDomain> for RPSBattleRoyaleExecutorState
 
         print!(
             "\x1B[H\
-            T{tick}   🪨:{}  📄:{}  ✂️:{}\n\
-            {}\n\
-            {:?}\n",
+            T{tick}   🗿:{}  📄:{}  ✂️:{}\n\
+            {}\n",
             self.rock_count,
             self.paper_count,
             self.scissors_count,
             *state,
-            self.mcts_visits,
         );
         
         if self.rock_count == CONTESTANTS {println!("Rock wins!\n {:?}", state.agents)} 

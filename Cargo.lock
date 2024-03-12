@@ -380,6 +380,7 @@ dependencies = [
  "log",
  "npc-engine-core",
  "npc-engine-utils",
+ "rand 0.8.5",
 ]
 
 [[package]]
