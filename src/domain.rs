@@ -39,7 +39,7 @@ impl Domain for RPSBattleRoyaleDomain {
         let agent = state_diff.get_agent(agent).unwrap();
         let point_value = state_diff.initial_state.map.longest_dist();
         let conversions = (agent.conversions as f32) * point_value;
-        let distance = state_diff.initial_state.map.distance_points(agent.location);
+        let distance = 3. * state_diff.initial_state.map.distance_points(agent.location);
         AgentValue::new(conversions + distance).unwrap()
     }
 

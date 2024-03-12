@@ -1,5 +1,8 @@
 use npc_engine_core::{Behavior, Context, IdleTask, Task};
-use npc_engine_utils::DIRECTIONS;
+use npc_engine_utils::{Direction, DIRECTIONS};
+
+use rand::thread_rng;
+use rand::seq::SliceRandom;
 
 use crate::{domain::RPSBattleRoyaleDomain, tasks::r#move::Move};
 
@@ -11,7 +14,14 @@ impl Behavior<RPSBattleRoyaleDomain> for Contestant {
     }
 
     fn add_own_tasks(&self, ctx: Context<RPSBattleRoyaleDomain>, tasks: &mut Vec<Box<dyn Task<RPSBattleRoyaleDomain>>>) {
-        for direction in DIRECTIONS {
+        let mut directions = vec![
+            Direction::Left,
+            Direction::Up,
+            Direction::Right,
+            Direction::Down,
+        ];
+        directions.shuffle(&mut thread_rng());
+        for direction in directions {
             let task = Move(direction);
             if task.is_valid(ctx) {
                 tasks.push(Box::new(task));
@@ -20,7 +30,7 @@ impl Behavior<RPSBattleRoyaleDomain> for Contestant {
         if tasks.is_empty() {
             log::error!("Couldnt add any movement tasks\n")
         }
-        tasks.push(Box::new(IdleTask));
+        //tasks.push(Box::new(IdleTask));
         
     }
 }

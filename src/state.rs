@@ -70,7 +70,7 @@ impl Display for GlobalState {
                 let location = Coord2D::new(x as i32, y as i32);
                 let text = if let Some(agent) = agents_map.get(&location) {
                     match agent {
-                        AgentType::Rock => "🪨",
+                        AgentType::Rock => "🗿",
                         AgentType::Paper => "📄",
                         AgentType::Scissors => "✂️",
                     }

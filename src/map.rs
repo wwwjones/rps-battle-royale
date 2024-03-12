@@ -15,8 +15,8 @@ pub struct Map{
 impl Map {
     pub fn new(height: u32, width: u32) -> Self {
         // for an easier time right now, make the side lengths even
-        let height = if height % 2 == 0 {height} else {height + 1};
-        let width = if width % 2 == 0 {width} else {width + 1};
+        let height = if height % 2 == 1 {height} else {height + 1};
+        let width = if width % 2 == 1 {width} else {width + 1};
         let center = Coord2D::new((width/2) as i32, (height/2) as i32);
         let longest_dist = ((center.x.pow(2) + center.y.pow(2)) as f32).sqrt();
         Self{height, width, center, longest_dist}

@@ -12,5 +12,7 @@ npc-engine-core = { path = "./npc-engine/npc-engine-core" }
 npc-engine-utils = { path = "./npc-engine/npc-engine-utils" }
 
 ansi_term = "0.12"
+rand = "0.8.4"
+
 log = "0.4.20"
 env_logger = "0.9.0"

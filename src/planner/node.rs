@@ -13,11 +13,11 @@ pub struct Node<D: Domain> {
     // index of the earliest parent node in the tree
     og_parent: Option<usize>,
     // vector of children nodes, with their respective tasks
-    children: Vec<(D::DisplayAction, usize)>,
+    children: Vec<usize>,
 }
 
 impl <D: Domain> Node<D> {
-    pub fn new(diff: D::Diff, score: AgentValue, parent: Option<usize>, og_parent: Option<usize>, children: Vec<(D::DisplayAction, usize)>) -> Self {
+    pub fn new(diff: D::Diff, score: AgentValue, parent: Option<usize>, og_parent: Option<usize>, children: Vec<usize>) -> Self {
         Self {
             diff,
             score,
@@ -26,7 +26,7 @@ impl <D: Domain> Node<D> {
             children,
         }
     }
-    pub fn add_children(&mut self, children: Vec<(D::DisplayAction, usize)>) {
+    pub fn add_children(&mut self, children: Vec<usize>) {
         self.children = children;
     }
     pub fn diff(&self) -> &D::Diff {
@@ -42,7 +42,7 @@ impl <D: Domain> Node<D> {
     pub fn og_parent(&self) -> Option<usize> {
         self.og_parent
     }
-    pub fn children(&self) -> &Vec<(D::DisplayAction, usize)> {
+    pub fn children(&self) -> &Vec<usize> {
         &self.children
     }
 }
