@@ -16,7 +16,8 @@
 
 // how to make breadth first - how to do backprop
 
-use std::{borrow::BorrowMut, collections::BTreeSet, fmt};
+use core::fmt;
+use std::{borrow::BorrowMut, collections::BTreeSet};
 
 use npc_engine_core::{AgentId, AgentValue, Context, ContextMut, Domain, StateDiffRef, Task};
 
@@ -36,18 +37,49 @@ struct Brain<D: Domain> {
     initial_state: D::State,
     // starting tick
     start_tick: u64,
+    // best task candidates
+    candidates: Vec<Box<dyn Task<D>>>,
     // best task
     best_task: Option<Box<dyn Task<D>>>,
 }
 
+impl<D: Domain> fmt::Debug for Brain<D> {
+    fn fmt(&self, f: &'_ mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Brain")
+            .field("\ndepth", &self.depth)
+            .field("\nroot agent", &self.root_agent)
+            .field("\nnodes", &self.nodes)
+            .field("\nbest_task", &self.best_task)
+            .finish()
+    }
+}
+
 impl <D: Domain> Brain<D> {
+    pub fn print(&self) {
+        println!("Brain:");
+        println!("  root agent: {}", self.root_agent);
+        println!("  depth: {}", self.depth);
+        println!("  best task: {:?}", self.best_task.as_ref().unwrap());
+        println!("  nodes:");
+
+        for i in 0..self.nodes.len() {
+            let node = &self.nodes[i];
+            println!("    {i}: {:?}", node.0);
+            println!("    diff: {:?}", node.1.diff());
+            println!("    score: {}", node.1.score());
+            println!("    parent: {:?}", node.1.parent());
+            println!("    og parent: {:?}", node.1.og_parent());
+            println!("    children: {:?}\n", node.1.children());
+        }
+    }
+
     pub fn new(root_agent: AgentId, initial_state: D::State, start_tick: u64, depth: u64) -> Self {
         // some helpers
         let diff = D::Diff::default();
         let zero_score = AgentValue::new(0.0).unwrap();
 
         // create the root node
-        let root_node: Node<D> = Node::new(diff.clone(), zero_score, None, Vec::new());
+        let root_node: Node<D> = Node::new(diff.clone(), zero_score, None, None, Vec::new());
 
         // create the nodes vector
         let mut nodes = vec![(D::display_action_task_idle(), root_node)];
@@ -56,14 +88,14 @@ impl <D: Domain> Brain<D> {
 
         // create children nodes by creating a list of valid tasks, executing them, and adding a node with a new diff for each
         let ctx = Context::with_state_and_diff(start_tick, &initial_state, &diff, root_agent);
-        let valid_tasks = D::get_tasks(ctx);
+        let candidates: Vec<Box<dyn Task<D>>> = D::get_tasks(ctx);
         let mut index = 1;
-        for task in valid_tasks.iter() {
+        for task in candidates.iter() {
             let mut diff = D::Diff::default();
             let ctx: ContextMut<'_, D> = ContextMut::with_state_and_diff(start_tick, &initial_state, &mut diff, root_agent);
             task.execute(ctx); // this changes the diff
             let score = D::get_current_value(start_tick, StateDiffRef::new(&initial_state, &diff), root_agent);
-            let new_node: Node<D> = Node::new(diff, score, Some(0), Vec::new());
+            let new_node: Node<D> = Node::new(diff, score, Some(0), Some(index), Vec::new());
             new_nodes.push((task.display_action(), new_node));
             children.push((task.display_action(), index));
             index += 1;
@@ -86,23 +118,32 @@ impl <D: Domain> Brain<D> {
             scores,
             initial_state,
             start_tick,
+            candidates,
             best_task: None,
         }
 
 
     }
 
+    // move right seems to actually be moving it right and down -- double check which diffs are being used and where execution is happening
+    // maybe also add tick to the node - for debugging
+
+    // creation already kind of does one step...
+    // maybe change creation to not include children yet and change run to start with the root agent's turn, makes more sense
+
     pub fn run(&mut self) {
         // other agent move, this agent's move, loop
         // we start with a root node with a child node for each valid move
         // want to go breadth first - increase the tick and iterate through the most recently added nodes
-        let mut start_idx = 1; // we start with the first child
-        let mut end_idx = self.nodes.len();
+        let mut end_idx = 1; // initialize this to 1, so start_idx is correct
 
         // loop node creation until we have reach the desired depth
-        for level in 0..self.depth {
+        for level in 1..=self.depth {
             let tick = self.start_tick + level;
 
+            let start_idx = end_idx;
+            end_idx = self.nodes.len();
+            let mut index = end_idx;
             for i in start_idx..end_idx {
                 // for each node, we get a list of the other agents
                 // for each agent, we get its possible tasks and execute each
@@ -115,25 +156,72 @@ impl <D: Domain> Brain<D> {
 
                 //get the current node
                 let start_node = self.nodes[i].1.borrow_mut();
-                let diff = start_node.diff();
-                let ctx = Context::with_state_and_diff(tick, &self.initial_state, diff, self.root_agent);
+                let mut diff = start_node.diff().clone();
+                let ctx = Context::with_state_and_diff(tick, &self.initial_state, &diff, self.root_agent);
                 let mut agents: BTreeSet<AgentId> = BTreeSet::new();
                 D::update_visible_agents(tick, ctx, &mut agents);
+
+                // agents is the list of agents whose tasks we now have to pick
+                // for each agent, go through each task and pick the one with the best immediate score and execute it, adding it to the diff for the next agent
+                for agent in agents {
+                    let ctx = Context::with_state_and_diff(tick, &self.initial_state, &diff, agent);
+                    let valid_tasks = D::get_tasks(ctx);
+                    let mut highscore: (AgentValue, D::DisplayAction, D::Diff) = (AgentValue::new(0.0).unwrap(), D::display_action_task_idle(), D::Diff::default()); // top choice of task
+                    // loop through the tasks and find the best one
+                    for task in valid_tasks.iter() {
+                        let mut temp_diff = diff.clone();
+                        let ctx: ContextMut<'_, D> = ContextMut::with_state_and_diff(tick, &self.initial_state, &mut temp_diff, agent);
+                        task.execute(ctx); // this changes the diff
+                        let score = D::get_current_value(tick, StateDiffRef::new(&self.initial_state, &temp_diff), agent);
+                        if score > highscore.0 {
+                            highscore = (score, task.display_action(), temp_diff.clone());
+                        }
+                    }
+                    diff = highscore.2.clone();
+                }
+                // diff should now hold the moves of all the other visible agents
+                // we now create a node for each currently valid task and connect them to our parent node
+                let mut new_nodes = Vec::new();
+                let mut children = Vec::new();
+
+                let ctx = Context::with_state_and_diff(tick, &self.initial_state, &diff, self.root_agent);
+                let valid_tasks = D::get_tasks(ctx);
+                let mut high_score = AgentValue::new(f32::MIN).unwrap();
+                let og_parent = start_node.og_parent().unwrap();
+                for task in valid_tasks.iter() {
+                    let mut new_diff = diff.clone();
+                    let ctx = ContextMut::with_state_and_diff(tick, &self.initial_state, &mut new_diff, self.root_agent);
+                    task.execute(ctx);
+                    let score = D::get_current_value(tick, StateDiffRef::new(&self.initial_state, &new_diff), self.root_agent);
+                    if score > high_score {
+                        high_score = score;
+                    }
+                    let new_node: Node<D> = Node::new(new_diff, score, Some(i), Some(og_parent), Vec::new());
+                    new_nodes.push((task.display_action(), new_node));
+                    children.push((task.display_action(), index));
+                    index += 1;
+                }
+
+                // update the scores list to contain the highest score of the new level
+                self.scores[og_parent-1] = high_score;
+
+                start_node.add_children(children);
+                self.nodes.append(&mut new_nodes);
+            }
+            // here, each node from this level has added its children            
+        }
+        // here, the tree should be fully created up to the specified level
+        // the highest scores at the deepest child node are stored in self.scores at the index of the first child that leads to that path
+        // return the task that corresponds to the path with the highest score
+
+        let mut best_task = (AgentValue::new(f32::MIN).unwrap(), 0);
+        for i in 0..self.scores.len() {
+            if self.scores[i] > best_task.0 {
+                best_task = (self.scores[i], i);
             }
         }
 
-        // once the tree has been fully created, simply pick the best action and return it
-    }
-}
-
-impl<D: Domain> fmt::Debug for Brain<D> {
-    fn fmt(&self, f: &'_ mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Brain")
-            .field("\ndepth", &self.depth)
-            .field("\nroot_agent", &self.root_agent)
-            .field("\nnodes", &self.nodes)
-            .field("\nscores", &self.scores)
-            .finish()
+        self.best_task = self.candidates.get(best_task.1).cloned();
     }
 }
 
@@ -146,14 +234,19 @@ mod tests {
 
     use super::Brain;
 
-    #[test]
-    fn create_brain() {
+    fn create_brain() -> Brain<RPSBattleRoyaleDomain> {
         let agent_info = vec![(AgentType::Rock, Coord2D::new(0, 0)), (AgentType::Scissors, Coord2D::new(0, 1))];
         let root_agent = AgentId(1);
         let start_tick = 0;
-        let depth = 5;
+        let depth = 1;
         let initial_state = _create_test_state(agent_info);
         let brain: Brain<RPSBattleRoyaleDomain> = Brain::new(root_agent, initial_state, start_tick, depth);
+        brain
+    }
+
+    #[test]
+    fn test_brain_creation() {
+        let brain: Brain<RPSBattleRoyaleDomain> = create_brain();
         //println!("{:?}", brain);
 
         // try and get children
@@ -169,6 +262,14 @@ mod tests {
         let child_3 = &brain.nodes[child_3_idx].1;
 
         println!("\nRoot node children:\n\n{:?}\n\n{:?}\n\n{:?}", child_1, child_2, child_3);
+    }
 
+    #[test]
+    fn think() {
+        let mut brain = create_brain();
+
+        brain.run();
+
+        brain.print();
     }
 }

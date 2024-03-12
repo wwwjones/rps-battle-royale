@@ -16,7 +16,7 @@ use crate::state::*;
 use crate::VISIBILITY_DISTANCE;
 
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum DisplayAction {
     #[default]
     Idle,
