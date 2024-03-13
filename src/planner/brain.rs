@@ -64,7 +64,7 @@ impl<D: Domain> fmt::Debug for Brain<D> {
 }
 
 impl <D: Domain> Brain<D> {
-    pub fn print(&self) {
+    pub fn _print(&self) {
         println!("Brain:");
         println!("  root agent: {}", self.root_agent);
         println!("  depth: {}", self.depth);
@@ -287,6 +287,6 @@ mod tests {
 
         brain.run();
 
-        brain.print();
+        brain._print();
     }
 }

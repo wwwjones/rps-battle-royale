@@ -1,5 +1,5 @@
-use npc_engine_core::{Behavior, Context, IdleTask, Task};
-use npc_engine_utils::{Direction, DIRECTIONS};
+use npc_engine_core::{Behavior, Context, Task};
+use npc_engine_utils::Direction;
 
 use rand::thread_rng;
 use rand::seq::SliceRandom;

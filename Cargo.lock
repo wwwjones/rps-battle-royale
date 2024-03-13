@@ -135,6 +135,7 @@ checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 [[package]]
 name = "npc-engine-core"
 version = "0.1.0"
+source = "git+https://github.com/ethz-gtc/npc-engine#255ca4503c7afb783cded0d34e6c3de8b59bb332"
 dependencies = [
  "dot",
  "downcast-rs",
@@ -149,6 +150,7 @@ dependencies = [
 [[package]]
 name = "npc-engine-utils"
 version = "0.1.0"
+source = "git+https://github.com/ethz-gtc/npc-engine#255ca4503c7afb783cded0d34e6c3de8b59bb332"
 dependencies = [
  "ansi_term",
  "log",

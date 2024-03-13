@@ -9,7 +9,7 @@ pub const MAP_WIDTH: u32 = 25;
 // planning parameters
 pub const PLANNING_DURATION: u64 = 3;
 pub const PLANNING_MINIMUM_VISITS: u32 = 5;
-pub const PLANNING_DEPTH: u32 = 3; //keep relatively low, 5 seems good for now
+pub const PLANNING_DEPTH: u32 = 5; //keep relatively low, 5 seems good for now
 
 // task weights (idle task has weight 1)
 pub const MOVE_WEIGHT: f32 = 10.0;

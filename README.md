@@ -7,4 +7,6 @@ This planner is therefore more myopic in its approach, though its purpose is not
 
 Currently, visualization is done in the terminal, but a wgpu implementation is in the works.
 
+This project is very much a work in progress!
+
 ![image](https://github.com/wwwjones/rps-battle-royale/assets/97795524/0005464b-bd77-4711-8a25-19b1f9c1f4e5)

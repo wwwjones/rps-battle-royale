@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#npc-engine-core = { git ="https://github.com/ethz-gtc/npc-engine" }
-npc-engine-core = { path = "./npc-engine/npc-engine-core" }
-#npc-engine-utils = { git = "https://github.com/ethz-gtc/npc-engine" }
-npc-engine-utils = { path = "./npc-engine/npc-engine-utils" }
+npc-engine-core = { git ="https://github.com/ethz-gtc/npc-engine" }
+#npc-engine-core = { path = "./npc-engine/npc-engine-core" }
+npc-engine-utils = { git = "https://github.com/ethz-gtc/npc-engine" }
+#npc-engine-utils = { path = "./npc-engine/npc-engine-utils" }
 
 ansi_term = "0.12"
 rand = "0.8.4"
